@@ -1,46 +1,60 @@
 public class LeadTriggerHandler extends TriggerHandler {
-    private static String phoneForMerge;
+    private static Map<Id, List<Lead>> oldLeadsByMasterRecordId;
 
     protected override void afterDelete() {
-        if (checkIfEventIsMerge()) {
-            List<Lead> mergedLeads = new List<Lead>((List<Lead>) Trigger.old);
-            Lead masterRecord = [SELECT CreatedDate, Phone FROM Lead WHERE Id = :mergedLeads[0].MasterRecordId];
-            mergedLeads.add(masterRecord);
-
-            findPhoneForMerge(mergedLeads);
-        }
+        fillMapOldLeadsByMasterRecordId(Trigger.old);
     }
 
     protected override void beforeUpdate() {
-        if (phoneForMerge != null) {
-            Lead lead = (Lead) Trigger.new[0];
-            lead.Phone = phoneForMerge;
+        if (oldLeadsByMasterRecordId != null) {
+            mergeLeads(oldLeadsByMasterRecordId, (List<Lead>) Trigger.new);
         }
 
-        showOldAndNewValues();
+        showOldAndNewValues(Trigger.old, (Map<Id, Lead>) Trigger.newMap);
     }
 
-    private void findPhoneForMerge(List<Lead> leads) {
+    private void fillMapOldLeadsByMasterRecordId(List<Lead> oldLeads) {
+        oldLeadsByMasterRecordId = new Map<Id, List<Lead>>();
+
+        for (Lead lead : oldLeads) {
+            Id masterRecordId = lead.MasterRecordId;
+
+            if (masterRecordId != null) {
+                if (oldLeadsByMasterRecordId.get(masterRecordId) != null) {
+                    oldLeadsByMasterRecordId.get(masterRecordId).add(lead);
+                } else {
+                    oldLeadsByMasterRecordId.put(masterRecordId, new List<Lead>{lead});
+                }
+            }
+        }
+    }
+
+    private void mergeLeads(Map<Id, List<Lead>> leadMap, List<Lead> masterLeads) {
+        for (Lead lead : masterLeads) {
+            if (leadMap.get(lead.Id) != null) {
+                List<Lead> leadsForMerge = leadMap.get(lead.Id);
+                leadsForMerge.add(lead);
+
+                lead.Phone = findPhoneForMerge(leadsForMerge);
+            }
+        }
+    }
+
+    private String findPhoneForMerge(List<Lead> leads) {
         Lead lastCreatedLead = leads[0];
 
         for (Lead lead : leads) {
-            if(lead.CreatedDate > lastCreatedLead.CreatedDate) {
+            if (lead.CreatedDate > lastCreatedLead.CreatedDate) {
                 lastCreatedLead = lead;
             }
         }
 
-        phoneForMerge = lastCreatedLead.Phone;
+        return lastCreatedLead.Phone;
     }
 
-    private Boolean checkIfEventIsMerge() {
-        Lead deletedLead = (Lead) Trigger.old[0];
-
-        return deletedLead.MasterRecordId != null;
-    }
-
-    private void showOldAndNewValues() {
-        for (Lead oldLead : (List<Lead>) Trigger.old) {
-            Lead newLead = (Lead) Trigger.newMap.get(oldLead.Id);
+    private void showOldAndNewValues(List<Lead> oldLeads, Map<Id, Lead> newLeads) {
+        for (Lead oldLead : oldLeads) {
+            Lead newLead = (Lead) newLeads.get(oldLead.Id);
             if (oldLead.Phone != newLead.Phone) {
                 System.debug('Old phone ' + oldLead.Phone);
                 System.debug('New phone ' + newLead.Phone);
