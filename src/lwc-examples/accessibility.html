@@ -1,0 +1,12 @@
+<template lwc:render-mode='light'>
+    <a
+        class={computedButtonClass}
+        href={computedHref}
+        tabindex="0"
+        onfocus={handleFocus}
+        onblur={handleBlur}
+        onmouseup={handleBlur}
+    >
+        <slot></slot>
+    </a>
+</template> 

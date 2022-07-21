@@ -1,0 +1,18 @@
+<template lwc:render-mode='light'>
+    <c-order-card if:true={isVisible}
+                      main-title={content.ETE_common_components_translations.contacts}>
+        <div class="order-data-contacts">
+            <h3 class="order-data-contacts__full-name mb-025">{user.firstName} {user.lastName}</h3>
+            <p class="order-data-contacts__phone mb-025">{user.phone}</p>
+            <p class="order-data-contacts__email mb-025">{user.email}</p>
+            <p class="order-data-contacts__company mb-075">{user.companyName}</p>
+            <ui-button class="order-data-contacts__edit"
+                              size="small"
+                              variant="gray"
+                              disabled
+                              onclick={edit}>
+                {content.ETE_common_components_translations.edit}
+            </ui-button>
+        </div>
+    </c-order-card>
+</template>
