@@ -1,0 +1,19 @@
+<template>
+    <div class="step step-your-offer">
+<!--        render conditionally   -->
+        <div if:false={isCreditBuilderHybridActive} class="step-your-offer__payment-terms">
+<!--            render lists    -->
+            <template for:each={offers} for:item="offer">
+<!--                pass data to child component   -->
+                <c-payment-terms
+                        key={offer.id}
+                        class="step-your-offer__payment-terms-item"
+                        onpaymenttermschange={handlePaymentTerms}
+                        offer={offer}>
+                </c-payment-terms>
+            </template>
+        </div>
+    </div>
+<!--    data binding   -->
+    <div class="step-your-offer__deposit-value" data-currency="£">{depositValue}</div>
+</template>
